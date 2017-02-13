@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,19 +11,18 @@ namespace Trees
     {
         static void Main(string[] args)
         {
-            var tree = new BinaryTree<int, int>();
-            tree.Add(5,5);
-            tree.Add(7,7);
-            tree.Add(2,2);
-            tree.Add(3,3);
-            tree.Add(9,9);
-            tree.Add(1,1);
-            tree.Add(4,4);
-            tree.Add(10, 10);
-            tree.Add(6,6);
-            tree.Add(8,8);
+            var tree = new BTree(3);
 
-            tree.ReverseInorderPrint(tree.root);
+            BTree.Node n1 = new BTree.Node(new List<int>() { 1, 2, 3 });
+            BTree.Node n2 = new BTree.Node(new List<int>() { 4, 17, 31 });
+            BTree.Node n3 = new BTree.Node(new List<int>() { 7, 9, 11, 13, 16 });
+            BTree.Node n4 = new BTree.Node(new List<int>() { 19, 26, 27 });
+            BTree.Node n5 = new BTree.Node(new List<int>() { 96, 97, 99 });
+
+            n2.left = n1;
+            n2.right = n3;
+
+            tree.Get(3);
 
             Console.ReadLine();
 
@@ -106,6 +106,70 @@ namespace Trees
 
         }
 
+        public void Remove(T1 key)
+        {
+            Node x = root, y = null;
+
+            while (x != null)
+            {
+                var cmp = key.CompareTo(x.key);
+
+                if (cmp == 0)
+                {
+                    break;
+                }
+                y = x;
+                x = cmp < 0 ? x.left : x.right;
+            }
+
+            if (x == null)
+            {
+                return;
+            }
+
+            if (x.right == null)
+            {
+                if (y == null)
+                {
+                    root = x.left;
+                }
+                else
+                {
+                    if (x == y.left)
+                    {
+                        y.left = x.left;
+                    }
+                    else
+                    {
+                        y.right = x.left;
+                    }
+                }
+            }
+            else
+            {
+                var leftMost = x.right;
+                y = null;
+
+                while (leftMost.left != null)
+                {
+                    y = leftMost;
+                    leftMost = leftMost.left;
+                }
+
+                if (y != null)
+                {
+                    y.left = leftMost.right;
+                }
+                else
+                {
+                    x.right = leftMost.right;
+                }
+
+                x.key = leftMost.key;
+                x.value = leftMost.value;
+            }
+        }
+
         public void LevelOrderPrint(Node rootNode)
         {
             if (rootNode == null)
@@ -136,7 +200,7 @@ namespace Trees
 
         public void PreorderPrint(Node rootNode)
         {
-            if (rootNode==null)
+            if (rootNode == null)
             {
                 return;
             }
@@ -181,8 +245,98 @@ namespace Trees
             ReverseInorderPrint(rootNode.right);
             Console.WriteLine(rootNode);
             ReverseInorderPrint(rootNode.left);
-            
+
         }
+    }
+
+    public class BTree
+    {
+        int t;
+        private Node rootNode = null;
+
+        public BTree(int measure)
+        {
+            t = measure;
+        }
+
+        public int Get(int key)
+        {
+            var x = rootNode;
+
+            if (rootNode == null) return -1;
+
+            while (true)
+            {
+                var nodeKey = x.NextKey();
+
+                while (nodeKey < key)
+                {
+                    if (nodeKey == -1)
+                    {
+                        return -1;
+                    }
+
+                    if (nodeKey == key)
+                    {
+                        return key;
+                    }
+
+                    nodeKey = x.NextKey();
+
+                }
+
+                x = x.left;
+
+            }
+
+        }
+
+        public class Node
+        {
+            List<NodeKey> _keys;
+            private int i;
+
+
+
+            public Node(List<NodeKey> keys)
+            {
+                _keys = keys;
+            }
+
+            public NodeKey NextKey()
+            {
+                return _keys.Count > i ? _keys[i++] : null;
+            }
+
+            public int KeysCount()
+            {
+                return _keys?.Count ?? 0;
+            }
+
+            public int this[int index] => _keys[index].Key;
+        }
+
+        public class NodeKey
+        {
+            public int Key { get; }
+
+            public Node left;
+            public Node right;
+
+            public NodeKey(int key)
+            {
+                Key = key;
+            }
+        }
+
+
+
+        public void AddNode(int key)
+        {
+            var x = rootNode;
+        }
+
+
     }
 
 }
