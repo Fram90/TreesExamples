@@ -19,10 +19,17 @@ namespace Trees
             BTree.Node n4 = new BTree.Node(new List<int>() { 19, 26, 27 });
             BTree.Node n5 = new BTree.Node(new List<int>() { 96, 97, 99 });
 
-            n2.left = n1;
-            n2.right = n3;
+            n2._keys[0].left = n1;
+            n2._keys[0].right = n3;
+            n2._keys[1].left = n3;
+            n2._keys[1].right = n4;
+            n2._keys[2].left = n4;
+            n2._keys[2].right = n5;
 
-            tree.Get(3);
+            tree.rootNode = n2;
+
+            tree.AddNode(20);
+            //Console.WriteLine(q?.Key.ToString() ?? "no element");
 
             Console.ReadLine();
 
@@ -251,69 +258,79 @@ namespace Trees
 
     public class BTree
     {
-        int t;
-        private Node rootNode = null;
+        int t, lowerBound, upperBound;
+        public Node rootNode = null;
 
         public BTree(int measure)
         {
             t = measure;
+            lowerBound = t - 1;
+            upperBound = 2 * t - 1;
         }
 
-        public int Get(int key)
+        public NodeKey Get(int key)
         {
-            var x = rootNode;
+            if (rootNode == null) return null;
 
-            if (rootNode == null) return -1;
+            return RecursiveGet(key, rootNode);
 
-            while (true)
+        }
+
+        private NodeKey RecursiveGet(int key, Node node)
+        {
+            NodeKey prev = null;
+            int i = 0;
+
+            var currentkey = node.GetNodeKey(i);
+
+            while (currentkey != null && currentkey.Key <= key)
             {
-                var nodeKey = x.NextKey();
-
-                while (nodeKey < key)
-                {
-                    if (nodeKey == -1)
-                    {
-                        return -1;
-                    }
-
-                    if (nodeKey == key)
-                    {
-                        return key;
-                    }
-
-                    nodeKey = x.NextKey();
-
-                }
-
-                x = x.left;
-
+                if (currentkey.Key == key) return currentkey;
+                prev = currentkey;
+                currentkey = node.GetNodeKey(++i);
             }
 
+            var nextNode = currentkey == null ? prev.right : currentkey.left;
+
+            return RecursiveGet(key, nextNode);
         }
 
         public class Node
         {
-            List<NodeKey> _keys;
-            private int i;
+            public List<NodeKey> _keys;
 
+            public int Count => _keys?.Count ?? 0;
 
+            public bool IsLeaf => _keys == null;
 
             public Node(List<NodeKey> keys)
             {
                 _keys = keys;
             }
 
-            public NodeKey NextKey()
+            public Node(List<int> keys)
             {
-                return _keys.Count > i ? _keys[i++] : null;
+                var keyList = new List<NodeKey>();
+
+                foreach (var key in keys)
+                {
+                    keyList.Add(new NodeKey(key));
+                }
+
+                _keys = keyList;
             }
 
-            public int KeysCount()
+            public NodeKey GetNodeKey(int index)
             {
-                return _keys?.Count ?? 0;
+                return _keys.Count > index ? _keys[index] : null;
             }
 
-            public int this[int index] => _keys[index].Key;
+            public NodeKey this[int index] => _keys.Count > index ? _keys[index] : null;
+
+            public NodeKey GetMeanElement()
+            {
+
+            }
         }
 
         public class NodeKey
@@ -334,6 +351,33 @@ namespace Trees
         public void AddNode(int key)
         {
             var x = rootNode;
+
+            var placeToAdd = FindPlaceToAdd(20, rootNode);
+        }
+
+        private int FindPlaceToAdd(int key, Node node)
+        {
+            NodeKey prev = null;
+            int i = 0;
+
+            var currentkey = node.GetNodeKey(i);
+
+            while (currentkey != null && currentkey.Key <= key)
+            {
+                if (currentkey.Key == key) return currentkey.Key;
+                prev = currentkey;
+                currentkey = node.GetNodeKey(++i);
+            }
+
+            var nextNode = currentkey == null ? prev.right : currentkey.left;
+
+            if (nextNode == null)
+            {
+                return node._keys.IndexOf(currentkey);
+            }
+
+            return FindPlaceToAdd(key, nextNode);
+
         }
 
 
