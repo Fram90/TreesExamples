@@ -13,24 +13,27 @@ namespace Trees
     {
         static void Main(string[] args)
         {
-            var tree = new BTree(3);
+            var tree = new BTree(2);
 
             BTree.Node n1 = new BTree.Node(new List<int>() { 1, 2, 3 });
             BTree.Node n2 = new BTree.Node(new List<int>() { 4, 17, 31 });
-            BTree.Node n3 = new BTree.Node(new List<int>() { 7, 9, 11, 13, 16 });
+            BTree.Node n3 = new BTree.Node(new List<int>() { 7, 9, 11 });//, 13, 16 });
             BTree.Node n4 = new BTree.Node(new List<int>() { 19, 26, 27 });
             BTree.Node n5 = new BTree.Node(new List<int>() { 96, 97, 99 });
 
-            n2.Children.Add(n1);
-            n2.Children.Add(n3);
-            n2.Children.Add(n4);
-            n2.Children.Add(n5);
-            tree.rootNode = n2;
-            tree.SplitChild(n2, 1, n3);
+            //n2.Children.Add(n1);
+            //n2.Children.Add(n3);
+            //n2.Children.Add(n4);
+            //n2.Children.Add(n5);
+            //tree.rootNode = n2;
 
-            
+            for (int j = 1; j < 10; j++)
+            {
+                tree.Insert(new BTree.NodeKey(j));
+            }
+
             int i = 0;
-            var test = tree.Search(tree.rootNode, 26, ref i);
+            var test = tree.Search(tree.rootNode, 9, ref i);
 
             Console.ReadLine();
 
@@ -273,12 +276,12 @@ namespace Trees
         public Node Search(Node root, int key, ref int index)
         {
             int i = 0;
-            while (i <= _t && key > root[i].Key)
+            while (i < root.Count() && key >= root[i].Key)
             {
                 i++;
             }
 
-            if (i <= _t && key == root[i].Key)
+            if (i < _t && i < root.Count() && key == root[i].Key)
             {
                 index = i;
                 return root;
@@ -287,7 +290,7 @@ namespace Trees
             return root.IsLeaf ? null : Search(root.Children[i], key, ref index);
         }
 
-        public void SplitChild(Node parent, int i, Node child)
+        private void SplitChild(Node parent, int i, Node child)
         {
             var z = new Node();
 
@@ -300,7 +303,7 @@ namespace Trees
             {
                 for (int j = 0; j < _t; j++)
                 {
-                    z.AddOrUpdateChild(j + 1, child.Children[j + _t]);
+                    z.AddOrUpdateChild(j, child.Children[j + _t]);
                 }
             }
 
@@ -309,17 +312,75 @@ namespace Trees
                 parent.AddOrUpdateChild(j + 1, parent.Children[j]);
             }
 
-            parent.Children[i + 1] = z;
+            parent.AddOrUpdateChild(i + 1, z);
 
             for (int j = parent.Count() - 1; j >= i; j--)
             {
                 parent.AddOrUpdateKey(j + 1, parent[j]);
             }
 
-            parent[i] = child[_t-1];
+            parent.AddOrUpdateKey(i, child[_t - 1]);
             child._keys.RemoveRange(_t - 1, child.Count() - _t + 1);
+        }
 
+        public void Insert(NodeKey key)
+        {
+            var root = rootNode;
 
+            if (root == null)
+            {
+                var node = new Node();
+                node._keys.Add(key);
+                this.rootNode = node;
+                return;
+            }
+
+            if (root.Count() == 2 * _t - 1)
+            {
+                var node = new Node();
+                rootNode = node;
+                node.Children.Add(root);
+                SplitChild(node, 1, root);
+                InsertNonFull(node, key);
+            }
+            else
+            {
+                InsertNonFull(root, key);
+            }
+
+        }
+
+        private void InsertNonFull(Node child, NodeKey key)
+        {
+            int i = child.Count() - 1;
+
+            if (child.IsLeaf)
+            {
+                while (i >= 0 && key.Key < child[i].Key)
+                {
+                    child[i + 1].Key = child[i].Key;
+                    i--;
+                }
+                child.AddOrUpdateKey(i + 1, key);
+            }
+            else
+            {
+                while (i >= 0 && key.Key < child[i].Key)
+                {
+                    i--;
+                }
+                i++;
+
+                if (child.Children[i].Count() == 2 * _t - 1)
+                {
+                    SplitChild(child, i, child.Children[i]);
+                    if (key.Key > child[i].Key)
+                    {
+                        i++;
+                    }
+                }
+                InsertNonFull(child.Children[i], key);
+            }
         }
 
         //public NodeKey Get(int key)
@@ -432,10 +493,7 @@ namespace Trees
 
         public class NodeKey
         {
-            public int Key { get; }
-
-            public Node left;
-            public Node right;
+            public int Key { get; set; }
 
             public NodeKey(int key)
             {
